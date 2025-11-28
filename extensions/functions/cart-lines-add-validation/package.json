@@ -1,0 +1,12 @@
+{
+  "name": "cart-lines-add-validation",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "shopify app function build"
+  },
+  "dependencies": {
+    "@shopify/shopify-api": "^10.0.0"
+  }
+}

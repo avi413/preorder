@@ -1,0 +1,108 @@
+{% comment %}
+  Waitlist Form Block
+  Shows "Notify me when back in stock" form
+{% endcomment %}
+
+{% if product.selected_or_first_available_variant %}
+  {% assign variant = product.selected_or_first_available_variant %}
+  {% assign variant_id = variant.id | split: '/' | last %}
+  
+  {% if variant.inventory_quantity <= 0 or variant.available == false %}
+    <div class="waitlist-container" data-variant-id="{{ variant_id }}" data-product-id="{{ product.id | split: '/' | last }}">
+      <form class="waitlist-form" onsubmit="handleWaitlistSubmit(event)">
+        <h3>Notify me when back in stock</h3>
+        <div class="waitlist-input-group">
+          <input 
+            type="email" 
+            name="email" 
+            placeholder="Enter your email" 
+            required
+            class="waitlist-email-input"
+          />
+          <button type="submit" class="waitlist-submit-btn">Notify Me</button>
+        </div>
+        <div class="waitlist-message" style="display: none;"></div>
+      </form>
+    </div>
+    
+    <script>
+      function handleWaitlistSubmit(event) {
+        event.preventDefault();
+        const form = event.target;
+        const email = form.querySelector('[name="email"]').value;
+        const variantId = '{{ variant_id }}';
+        const productId = '{{ product.id | split: "/" | last }}';
+        const shopDomain = '{{ shop.permanent_domain }}';
+        const messageDiv = form.querySelector('.waitlist-message');
+        
+        fetch('/apps/preorder/api/waitlist/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            shopDomain,
+            productId,
+            variantId,
+            email,
+          }),
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            messageDiv.textContent = 'You\'ve been added to the waitlist!';
+            messageDiv.style.display = 'block';
+            messageDiv.style.color = 'green';
+            form.reset();
+          } else {
+            messageDiv.textContent = data.error || 'Something went wrong. Please try again.';
+            messageDiv.style.display = 'block';
+            messageDiv.style.color = 'red';
+          }
+        })
+        .catch(err => {
+          messageDiv.textContent = 'Error submitting form. Please try again.';
+          messageDiv.style.display = 'block';
+          messageDiv.style.color = 'red';
+        });
+      }
+    </script>
+    
+    <style>
+      .waitlist-container {
+        margin: 20px 0;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .waitlist-form h3 {
+        margin-bottom: 15px;
+      }
+      .waitlist-input-group {
+        display: flex;
+        gap: 10px;
+      }
+      .waitlist-email-input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .waitlist-submit-btn {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .waitlist-submit-btn:hover {
+        background-color: #0056b3;
+      }
+      .waitlist-message {
+        margin-top: 10px;
+        font-size: 14px;
+      }
+    </style>
+  {% endif %}
+{% endif %}

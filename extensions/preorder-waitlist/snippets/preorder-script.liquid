@@ -1,0 +1,68 @@
+{% comment %}
+  Pre-Order Script Snippet
+  Can be included in theme to add pre-order functionality
+{% endcomment %}
+
+<script>
+  (function() {
+    // This script will be injected into the storefront
+    // It checks for pre-order settings and modifies the UI accordingly
+    
+    const shopDomain = '{{ shop.permanent_domain }}';
+    const currentVariantId = document.querySelector('[name="id"]')?.value;
+    
+    if (!currentVariantId) return;
+    
+    // Fetch pre-order settings for current variant
+    fetch(`/apps/preorder/api/preorder/${shopDomain}`)
+      .then(res => res.json())
+      .then(data => {
+        const variantId = currentVariantId.toString();
+        const preOrder = data.preOrders?.find(po => 
+          po.variantId === variantId || po.variantId.includes(variantId)
+        );
+        
+        if (preOrder && preOrder.enabled) {
+          // Modify Add to Cart button
+          const addToCartBtn = document.querySelector('[name="add"], .product-form__cart-submit, button[type="submit"][name="add"]');
+          if (addToCartBtn) {
+            addToCartBtn.textContent = preOrder.customText || 'Pre-Order Now';
+            addToCartBtn.classList.add('preorder-active');
+            
+            // Add expected date display
+            if (preOrder.expectedDate) {
+              const dateDisplay = document.createElement('div');
+              dateDisplay.className = 'preorder-expected-date';
+              dateDisplay.textContent = `Expected: ${new Date(preOrder.expectedDate).toLocaleDateString()}`;
+              addToCartBtn.parentNode.appendChild(dateDisplay);
+            }
+          }
+          
+          // Handle quantity limits
+          const quantityInput = document.querySelector('[name="quantity"]');
+          if (quantityInput && preOrder.limitQuantity) {
+            quantityInput.setAttribute('max', preOrder.limitQuantity);
+            quantityInput.addEventListener('change', function() {
+              const value = parseInt(this.value);
+              if (value > preOrder.limitQuantity) {
+                this.value = preOrder.limitQuantity;
+                alert(`Maximum quantity for pre-order is ${preOrder.limitQuantity}`);
+              }
+            });
+          }
+        }
+      })
+      .catch(err => console.error('Pre-order check error:', err));
+  })();
+</script>
+
+<style>
+  .preorder-active {
+    background-color: #ff6b35 !important;
+  }
+  .preorder-expected-date {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #666;
+  }
+</style>

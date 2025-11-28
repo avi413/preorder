@@ -1,0 +1,71 @@
+{% comment %}
+  Pre-Order Button Block
+  Replaces Add to Cart button with Pre-Order functionality
+{% endcomment %}
+
+{% if product.selected_or_first_available_variant %}
+  {% assign variant = product.selected_or_first_available_variant %}
+  {% assign variant_id = variant.id | split: '/' | last %}
+  
+  <div class="preorder-container" data-variant-id="{{ variant_id }}" data-product-id="{{ product.id | split: '/' | last }}">
+    <script>
+      (function() {
+        const variantId = '{{ variant_id }}';
+        const productId = '{{ product.id | split: "/" | last }}';
+        const shopDomain = '{{ shop.permanent_domain }}';
+        
+        // Fetch pre-order settings
+        fetch(`/apps/preorder/api/preorder/${shopDomain}`)
+          .then(res => res.json())
+          .then(data => {
+            const preOrder = data.preOrders?.find(po => po.variantId === variantId && po.enabled);
+            
+            if (preOrder) {
+              // Replace Add to Cart button
+              const addToCartBtn = document.querySelector('[name="add"]');
+              if (addToCartBtn) {
+                const preOrderBtn = addToCartBtn.cloneNode(true);
+                preOrderBtn.textContent = preOrder.customText || 'Pre-Order Now';
+                preOrderBtn.classList.add('preorder-button');
+                
+                // Show expected date if available
+                if (preOrder.expectedDate) {
+                  const dateText = document.createElement('div');
+                  dateText.className = 'preorder-date';
+                  dateText.textContent = `Expected: ${new Date(preOrder.expectedDate).toLocaleDateString()}`;
+                  addToCartBtn.parentNode.insertBefore(dateText, addToCartBtn.nextSibling);
+                }
+                
+                // Handle quantity limit
+                const quantityInput = document.querySelector('[name="quantity"]');
+                if (quantityInput && preOrder.limitQuantity) {
+                  quantityInput.max = preOrder.limitQuantity;
+                  quantityInput.addEventListener('change', function() {
+                    if (parseInt(this.value) > preOrder.limitQuantity) {
+                      this.value = preOrder.limitQuantity;
+                      alert(`Maximum quantity for pre-order is ${preOrder.limitQuantity}`);
+                    }
+                  });
+                }
+                
+                addToCartBtn.replaceWith(preOrderBtn);
+              }
+            }
+          })
+          .catch(err => console.error('Pre-order fetch error:', err));
+      })();
+    </script>
+    
+    <style>
+      .preorder-button {
+        background-color: #ff6b35;
+        color: white;
+      }
+      .preorder-date {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #666;
+      }
+    </style>
+  </div>
+{% endif %}
