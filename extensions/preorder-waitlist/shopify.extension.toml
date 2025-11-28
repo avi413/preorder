@@ -1,0 +1,15 @@
+# Learn more about configuring your extension at https://shopify.dev/docs/apps/app-extensions/configuration
+
+api_version = "2024-10"
+
+[[extensions]]
+type = "theme"
+name = "Pre-Order & Waitlist"
+handle = "preorder-waitlist"
+
+[extensions.settings]
+[[extensions.settings.fields]]
+key = "api_endpoint"
+type = "single_line_text_field"
+name = "API Endpoint"
+default = "/apps/preorder/api"

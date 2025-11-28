@@ -1,0 +1,11 @@
+# Learn more about configuring your extension at https://shopify.dev/docs/apps/app-extensions/configuration
+
+api_version = "2024-10"
+
+[[extensions]]
+type = "function"
+name = "Cart Lines Add Validation"
+handle = "cart-lines-add-validation"
+
+[extensions.targeting]
+target = "cart.lines.add"
